@@ -1,24 +1,40 @@
 import { useState, useEffect } from 'react';
 
-// Datos de ejemplo para autenticación
-const USERS = [
-  { username: 'user1', password: 'password1' },
-  { username: 'user2', password: 'password2' },
-];
-
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cart, setCart] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const [USERS, setData] = useState(null)
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    // Verificar credenciales en el frontend
+    const user = USERS.find(u => u.username === username && u.password === password);
+
+    if (user) {
+      setIsLoggedIn(true);
+      localStorage.setItem('isLoggedIn', 'true');
+    } else {
+      alert('Invalid username or password');
+    }
+  };
 
   // Recupera el estado de inicio de sesión del localStorage al montar el componente
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
     setIsLoggedIn(loggedIn);
+
+    fetch('/api/users')
+    .then((res) => res.json())
+    .then((data) => {
+      setData(data)
+    })
 
     if (loggedIn) {
       const fetchProducts = async () => {
@@ -42,21 +58,6 @@ export default function Home() {
     }
   }, []);
 
-  // Función para manejar el inicio de sesión
-  const handleLogin = (e) => {
-    e.preventDefault();
-
-    // Verificar credenciales en el frontend
-    const user = USERS.find(u => u.username === username && u.password === password);
-
-    if (user) {
-      setIsLoggedIn(true);
-      localStorage.setItem('isLoggedIn', 'true');
-    } else {
-      alert('Invalid username or password');
-    }
-  };
-
   // Función para agregar un producto al carrito
   const addToCart = (product) => {
     const existingProduct = cart.find(item => item.id === product.id);
@@ -79,10 +80,10 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4">
-        <img src="juegos/p0001.png"/>
-        {isLoggedIn ? (
+      {isLoggedIn ? (
         <>
           <button onClick={handleLogout} className="bg-red-500 text-white p-2 rounded">Logout</button>
+          <img className='max-h-96 w-full object-cover' src="juegos/p0001.png" />
           <h2 className="text-xl mt-4">Catálogo de Productos</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {loading ? <p>Loading...</p> : error ? <p>Error: {error}</p> : (
@@ -113,31 +114,20 @@ export default function Home() {
         </>
       ) : (
         <div>
-          <h2 className="text-xl">Iniciar sesión</h2>
-          <form onSubmit={handleLogin} className="mt-4">
-            <div className="mb-4">
-              <label htmlFor="username" className="block">Nombre de usuario:</label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="border p-2 w-full"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="password" className="block">Contraseña:</label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="border p-2 w-full"
-                required
-              />
-            </div>
-            <button type="submit" className="bg-blue-500 text-white p-2 rounded">Iniciar sesión</button>
+          <form onSubmit={handleLogin}>
+            <input
+              type="text"
+              placeholder="Usuario"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button type="submit">Iniciar Sesión</button>
           </form>
         </div>
       )}
